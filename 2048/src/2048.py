@@ -3,46 +3,46 @@ import numpy as np
 import random
 import os
 import time
+from threading import Thread, Lock
 
 print("Use w,a,s,d to control!")
 print("Use 'q' to quit!")
 while True:
     try:
-        N = max(int(input('input size(lager equal than 3): ')), 3)
+        N = max(int(input('input size (larger than or equal to 3): ')), 3)
         break
     except ValueError:
-        print("Please input a num!")
+        print("Please input a number!")
 
-g = np.array([[0 for i in range(N)]for i in range(N)])
+g = np.array([[0 for i in range(N)] for i in range(N)])
 score = 0
 start_time = time.time()
-last_print_time = start_time
-print(start_time)
 game_over = False
+lock = Lock()
 
 def printg():
     global start_time
-    os.system('cls')
-    print(f'YOUR SCORE: {score}\t\t\tTIME: {int(time.time() - start_time)}')
-    print('-' * 6 * N)
-    for i in range(N):
-        for j in range(N):
-            print(g[i][j], end='\t')
-        if i != N - 1:
-            print(end='\n\n')
-    print()
-    print('-' * 6 * N)
-    print('POWERED by JUICE')
-    print('https://github.com/pure-deep-love/mini_games.git')
-    
+    with lock:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(f'YOUR SCORE: {score}\t\t\tTIME: {int(time.time() - start_time)}')
+        print('-' * 6 * N)
+        for i in range(N):
+            for j in range(N):
+                print(g[i][j], end='\t')
+            if i != N - 1:
+                print(end='\n\n')
+        print()
+        print('-' * 6 * N)
+        print('POWERED by JUICE')
+        print('https://github.com/pure-deep-love/mini_games.git')
 
 def ran_num():
     a = random.randint(0, N - 1)
     b = random.randint(0, N - 1)
-    while(g[a][b]):
+    while g[a][b]:
         a = random.randint(0, N - 1)
-        b = random.randint(0, N - 1)      
-    g[a][b] = 2  
+        b = random.randint(0, N - 1)
+    g[a][b] = 2
 
 def compress(arr, st):
     tmp = np.array([0 for i in range(N)])
@@ -64,7 +64,7 @@ def merge(arr, st):
     if st == 1:
         start, end, step = 1, N, 1
     i = start
-    while flag := i > end if st == 0 else i < end:
+    while (i > end if st == 0 else i < end):
         if tmp[i] == tmp[i + 1 if st == 0 else i - 1]:
             tmp[i] += tmp[i + 1 if st == 0 else i - 1]
             score += tmp[i]
@@ -75,28 +75,27 @@ def merge(arr, st):
     return arr
 
 def move(key):
-    for i in range(N):
-        if key == 'w':
-            g[:, i] = merge(g[:, i], 0)
-        elif key == 's':
-            g[:, i] = merge(g[:, i], 1)
-        elif key == 'a':
-            g[i, :] = merge(g[i, :], 0)
-        elif key == 'd':
-            g[i, :] = merge(g[i, :], 1)
+    with lock:
+        for i in range(N):
+            if key == 'w':
+                g[:, i] = merge(g[:, i], 0)
+            elif key == 's':
+                g[:, i] = merge(g[:, i], 1)
+            elif key == 'a':
+                g[i, :] = merge(g[i, :], 0)
+            elif key == 'd':
+                g[i, :] = merge(g[i, :], 1)
 
 def check():
-    cnt = 0
-    for i in range(N):
-        for j in range(N):
-            if g[i][j] != 0:
-                cnt += 1
-    if cnt < N * N:
-        return True
-    return False
-
-ran_num(), ran_num()
-printg()
+    with lock:
+        cnt = 0
+        for i in range(N):
+            for j in range(N):
+                if g[i][j] != 0:
+                    cnt += 1
+        if cnt < N * N:
+            return True
+        return False
 
 def callback(event):
     keys = ['w', 'a', 's', 'd', 'q']
@@ -112,16 +111,25 @@ def callback(event):
             game_over = True
             keyboard.unhook_all()
 
-keyboard.on_press(callback)
-while not game_over:
-    current_time = time.time()
-    if current_time - last_print_time >= 1:
+def printg_periodically():
+    global game_over
+    while not game_over:
+        time.sleep(1)
         printg()
-        last_print_time = current_time
+
+ran_num()
+ran_num()
+printg()
+keyboard.on_press(callback)
+
+print_thread = Thread(target=printg_periodically)
+print_thread.start()
+
+while not game_over:
     if keyboard.is_pressed('q'):
         game_over = True
         keyboard.unhook_all()
 
-time.sleep(0.3)
+print_thread.join()
 print("The game has been quit!")
-os.system('pause')
+os.system('pause' if os.name == 'nt' else 'read')
