@@ -24,7 +24,7 @@ def ran_num():
         b = random.randint(0, N - 1)      
     g[a][b] = 2  
 
-def process(arr, st):
+def compress(arr, st):
     tmp = np.array([0 for i in range(N)])
     start, end, step = 0, N, 1
     j = 0
@@ -35,6 +35,10 @@ def process(arr, st):
         if arr[i] != 0:
             tmp[j] = arr[i]
             j = j + 1 if st == 0 else j - 1
+    return tmp
+
+def merge(arr, st):
+    tmp = compress(arr, st)
     start, end, step = N - 2, -1, -1
     if st == 1:
         start, end, step = 1, N, 1
@@ -45,18 +49,19 @@ def process(arr, st):
             tmp[i + 1 if st == 0 else i - 1] = 0
             i = i - 1 if st == 0 else i + 1
         i = i - 1 if st == 0 else i + 1
-    return tmp
+    arr = compress(tmp, st)
+    return arr
 
 def move(key):
     for i in range(N):
         if key == 'w':
-            g[:, i] = process(g[:, i], 0)
+            g[:, i] = merge(g[:, i], 0)
         elif key == 's':
-            g[:, i] = process(g[:, i], 1)
+            g[:, i] = merge(g[:, i], 1)
         elif key == 'a':
-            g[i, :] = process(g[i, :], 0)
+            g[i, :] = merge(g[i, :], 0)
         elif key == 'd':
-            g[i, :] = process(g[i, :], 1)
+            g[i, :] = merge(g[i, :], 1)
 
 def check():
     cnt = 0
