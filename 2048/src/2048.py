@@ -1,12 +1,25 @@
+import keyboard
 import numpy as np
 import random
+import os
 
-N = max(int(input('input size: ')), 3)
-print("use w,a,s,d to control")
+
+print("Use w,a,s,d to control!")
+print("Use 'q' to quit!")
+while True:
+    try:
+        N = max(int(input('input size(lager equal than 3): ')), 3)
+        break
+    except ValueError:
+        print("Please input a num!")
 
 g = np.array([[0 for i in range(N)]for i in range(N)])
+score = 0
+game_over = False
 
 def printg():
+    os.system('cls')
+    print(f'YOUR SCORE: {score}')
     print('-' * 6 * N)
     for i in range(N):
         for j in range(N):
@@ -15,6 +28,8 @@ def printg():
             print(end='\n\n')
     print()
     print('-' * 6 * N)
+    print('POWERED by JUICE')
+    print('https://github.com/pure-deep-love/mini_games.git')
     
 
 def ran_num():
@@ -39,6 +54,7 @@ def compress(arr, st):
     return tmp
 
 def merge(arr, st):
+    global score
     tmp = compress(arr, st)
     start, end, step = N - 2, -1, -1
     if st == 1:
@@ -47,6 +63,7 @@ def merge(arr, st):
     while flag := i > end if st == 0 else i < end:
         if tmp[i] == tmp[i + 1 if st == 0 else i - 1]:
             tmp[i] += tmp[i + 1 if st == 0 else i - 1]
+            score += tmp[i]
             tmp[i + 1 if st == 0 else i - 1] = 0
             i = i - 1 if st == 0 else i + 1
         i = i - 1 if st == 0 else i + 1
@@ -77,12 +94,23 @@ def check():
 ran_num(), ran_num()
 printg()
 
-ending = False
-while (not ending) :
-    move(input())
-    if check():
-        ran_num()
-        printg()
-    else:
-        ending = True
-        print("Game Over!")
+def callback(event):
+    keys = ['w', 'a', 's', 'd', 'q']
+    global game_over
+    key = event.name
+    if key in keys:
+        move(key)
+        if check():
+            ran_num()
+            printg()
+        else:
+            print("Game Over!")
+            game_over = True
+            keyboard.unhook_all()
+
+keyboard.on_press(callback)
+while not game_over:
+    if keyboard.is_pressed('q'):
+        break
+
+print("The game has been quit!")
