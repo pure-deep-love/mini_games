@@ -114,7 +114,7 @@ def callback(event):
 def printg_periodically():
     global game_over
     while not game_over:
-        time.sleep(1)
+        time.sleep(5)
         printg()
 
 ran_num()
