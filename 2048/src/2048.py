@@ -2,7 +2,7 @@ import keyboard
 import numpy as np
 import random
 import os
-
+import time
 
 print("Use w,a,s,d to control!")
 print("Use 'q' to quit!")
@@ -15,11 +15,15 @@ while True:
 
 g = np.array([[0 for i in range(N)]for i in range(N)])
 score = 0
+start_time = time.time()
+last_print_time = start_time
+print(start_time)
 game_over = False
 
 def printg():
+    global start_time
     os.system('cls')
-    print(f'YOUR SCORE: {score}')
+    print(f'YOUR SCORE: {score}\t\t\tTIME: {int(time.time() - start_time)}')
     print('-' * 6 * N)
     for i in range(N):
         for j in range(N):
@@ -110,7 +114,14 @@ def callback(event):
 
 keyboard.on_press(callback)
 while not game_over:
+    current_time = time.time()
+    if current_time - last_print_time >= 1:
+        printg()
+        last_print_time = current_time
     if keyboard.is_pressed('q'):
-        break
+        game_over = True
+        keyboard.unhook_all()
 
+time.sleep(0.3)
 print("The game has been quit!")
+os.system('pause')
