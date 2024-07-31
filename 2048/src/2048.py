@@ -2,6 +2,7 @@ import numpy as np
 import random
 
 N = max(int(input('input size: ')), 3)
+print("use w,a,s,d to control")
 
 g = np.array([[0 for i in range(N)]for i in range(N)])
 
