@@ -60,17 +60,16 @@ def compress(arr, st):
 def merge(arr, st):
     global score
     tmp = compress(arr, st)
-    start, end, step = N - 2, -1, -1
+    start, end, step = 0, N - 1, 1
     if st == 1:
-        start, end, step = 1, N, 1
+        start, end, step = N - 1, 0, -1
     i = start
-    while (i > end if st == 0 else i < end):
+    while (i < end if st == 0 else i > end):
         if tmp[i] == tmp[i + 1 if st == 0 else i - 1]:
             tmp[i] += tmp[i + 1 if st == 0 else i - 1]
             score += tmp[i]
             tmp[i + 1 if st == 0 else i - 1] = 0
-            i = i - 1 if st == 0 else i + 1
-        i = i - 1 if st == 0 else i + 1
+        i = i + 1 if st == 0 else i - 1
     arr = compress(tmp, st)
     return arr
 
