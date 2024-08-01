@@ -141,16 +141,15 @@ class Game2048:
         if event.char in self.keys and event.char in self.key_of_press:    
             self.cooldown = True 
             moved = self.move(event.char)
-            flag = self.check()
+            if not self.check():
+                self.game_over = True
+                self.root.unbind("<KeyPress>")
+                self.root.unbind("<KeyRelease>")
+                self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
             if moved:
-                if flag:
-                    self.ran_num()
-                    self.printg()
-                else:
-                    self.game_over = True
-                    self.root.unbind("<KeyPress>")
-                    self.root.unbind("<KeyRelease>")
-                    self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
+                self.ran_num()
+                self.printg()
+                    
             self.root.after(150, self.reset_cooldown)
 
     def reset_cooldown(self):
