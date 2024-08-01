@@ -50,20 +50,22 @@ class Game2048:
         self.print_thread = Thread(target=self.printg_periodically)
         self.print_thread.start()
 
-    def printg(self):
+    def printg_above(self):
         with self.lock:
             self.score_label.config(text=f"YOUR SCORE: {self.score}")
             self.time_label.config(text=f"TIME: {int(time.time() - self.start_time)}")
-            
-            self.canvas.delete("all")
-            cell_width = 600 // self.size
-            for i in range(self.size):
-                for j in range(self.size):
-                    x0, y0 = j * cell_width + 3, i * cell_width + 3
-                    x1, y1 = x0 + cell_width, y0 + cell_width
-                    self.canvas.create_rectangle(x0, y0, x1, y1, fill="white", outline="black")
-                    if self.grid[i][j] != 0:
-                        self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2, text=str(self.grid[i][j]), font=("Helvetica Neue", 20))
+
+    def printg(self):
+        self.printg_above()    
+        self.canvas.delete("all")
+        cell_width = 600 // self.size
+        for i in range(self.size):
+            for j in range(self.size):
+                x0, y0 = j * cell_width + 3, i * cell_width + 3
+                x1, y1 = x0 + cell_width, y0 + cell_width
+                self.canvas.create_rectangle(x0, y0, x1, y1, fill="white", outline="black")
+                if self.grid[i][j] != 0:
+                    self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2, text=str(self.grid[i][j]), font=("Helvetica Neue", 20))
 
     def ran_num(self):
         a, b = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
@@ -149,7 +151,7 @@ class Game2048:
                     self.root.unbind("<KeyPress>")
                     self.root.unbind("<KeyRelease>")
                     self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
-            self.root.after(200, self.reset_cooldown)
+            self.root.after(150, self.reset_cooldown)
 
     def reset_cooldown(self):
         self.cooldown = False
@@ -157,7 +159,7 @@ class Game2048:
     def printg_periodically(self):
         while not self.game_over:
             time.sleep(1)
-            self.printg()
+            self.printg_above()
 
 class SizeSelector:
     def __init__(self, root):
