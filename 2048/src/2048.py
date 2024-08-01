@@ -9,7 +9,7 @@ print("Use w,a,s,d to control!")
 print("Use 'q' to quit!")
 while True:
     try:
-        N = max(int(input('input size (larger than or equal to 3): ')), 3)
+        N = max(int(input('input N (larger than or equal to 3): ')), 3)
         break
     except ValueError:
         print("Please input a number!")
@@ -75,25 +75,42 @@ def merge(arr, st):
 
 def move(key):
     with lock:
-        for i in range(N):
-            if key == 'w':
-                g[:, i] = merge(g[:, i], 0)
-            elif key == 's':
-                g[:, i] = merge(g[:, i], 1)
-            elif key == 'a':
-                g[i, :] = merge(g[i, :], 0)
-            elif key == 'd':
-                g[i, :] = merge(g[i, :], 1)
+        moved = False
+        if key == 'w':
+            for i in range(N):
+                new_col = merge(g[:, i], 0)
+                if not np.array_equal(g[:, i], new_col):
+                    moved = True
+                g[:, i] = new_col
+        elif key == 's':
+            for i in range(N):
+                new_col = merge(g[:, i], 1)
+                if not np.array_equal(g[:, i], new_col):
+                    moved = True
+                g[:, i] = new_col
+        elif key == 'a':
+            for i in range(N):
+                new_row = merge(g[i, :], 0)
+                if not np.array_equal(g[i, :], new_row):
+                    moved = True
+                g[i, :] = new_row
+        elif key == 'd':
+            for i in range(N):
+                new_row = merge(g[i, :], 1)
+                if not np.array_equal(g[i, :], new_row):
+                    moved = True
+                g[i, :] = new_row
+        return moved
 
 def check():
     with lock:
-        cnt = 0
         for i in range(N):
-            for j in range(N):
-                if g[i][j] != 0:
-                    cnt += 1
-        if cnt < N * N:
-            return True
+            for j in range(N - 1):
+                if g[i][j] == 0 or g[i][j] == g[i][j + 1] or g[j][i] == g[j + 1][i]:
+                    return True
+        for i in range(N):
+            if g[N - 1][i] == 0:
+                return True
         return False
 
 def callback(event):
@@ -101,11 +118,11 @@ def callback(event):
     global game_over
     key = event.name
     if key in keys:
-        move(key)
-        if check():
+        moved = move(key)
+        if moved:
             ran_num()
             printg()
-        else:
+        if not check():
             print("Game Over!")
             game_over = True
             keyboard.unhook_all()
