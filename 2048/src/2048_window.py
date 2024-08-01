@@ -16,6 +16,7 @@ class Game2048:
         self.cooldown = False
         self.key_of_press = set()
         self.keys = ['w', 'a', 's', 'd']
+        self.num_cnt = 0
 
         self.root.title("2048 Game")
         
@@ -45,6 +46,7 @@ class Game2048:
         
         self.ran_num()
         self.ran_num()
+        self.num_cnt += 2
         self.printg()
 
         self.print_thread = Thread(target=self.printg_periodically)
@@ -89,6 +91,7 @@ class Game2048:
                 tmp[i] *= 2
                 self.score += tmp[i]
                 tmp[i + 1] = 0
+                self.num_cnt -= 1
         return self.compress(tmp, st)
 
     def move(self, key):
@@ -123,11 +126,8 @@ class Game2048:
     def check(self):
         for i in range(self.size):
             for j in range(self.size - 1):
-                if self.grid[i][j] == 0 or self.grid[i][j] == self.grid[i][j + 1] or self.grid[j][i] == self.grid[j + 1][i]:
+                if self.grid[i][j] == self.grid[i][j + 1] or self.grid[j][i] == self.grid[j + 1][i]:
                     return True
-        for i in range(self.size):
-            if self.grid[self.size - 1][i] == 0:
-                return True
         return False
 
     def key_press(self, event):
@@ -146,13 +146,14 @@ class Game2048:
             moved = self.move(event.char)
             if moved:
                 self.ran_num()
+                self.num_cnt += 1
                 self.printg()
-            if not self.check():
-                self.game_over = True
-                self.root.unbind("<KeyPress>")
-                self.root.unbind("<KeyRelease>")
-                self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
-            self.root.after(150, self.reset_cooldown)
+                if self.num_cnt >= self.size * self.size and not self.check():
+                    self.game_over = True
+                    self.root.unbind("<KeyPress>")
+                    self.root.unbind("<KeyRelease>")
+                    self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
+            self.root.after(120, self.reset_cooldown)
 
     def reset_cooldown(self):
         self.cooldown = False

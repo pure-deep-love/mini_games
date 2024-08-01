@@ -16,6 +16,7 @@ while True:
 
 g = np.array([[0 for i in range(N)] for i in range(N)])
 score = 0
+num_cnt = 0
 start_time = time.time()
 game_over = False
 lock = Lock()
@@ -58,17 +59,18 @@ def compress(arr, st):
     return tmp
 
 def merge(arr, st):
-    global score
+    global score, num_cnt
     tmp = compress(arr, st)
     start, end, step = 0, N - 1, 1
     if st == 1:
         start, end, step = N - 1, 0, -1
     i = start
     while (i < end if st == 0 else i > end):
-        if tmp[i] == tmp[i + 1 if st == 0 else i - 1]:
+        if tmp[i] == tmp[i + 1 if st == 0 else i - 1] and tmp[i] != 0:
             tmp[i] += tmp[i + 1 if st == 0 else i - 1]
             score += tmp[i]
             tmp[i + 1 if st == 0 else i - 1] = 0
+            num_cnt -= 1
         i = i + 1 if st == 0 else i - 1
     arr = compress(tmp, st)
     return arr
@@ -106,14 +108,12 @@ def check():
     with lock:
         for i in range(N):
             for j in range(N - 1):
-                if g[i][j] == 0 or g[i][j] == g[i][j + 1] or g[j][i] == g[j + 1][i]:
+                if g[i][j] == g[i][j + 1] or g[j][i] == g[j + 1][i]:
                     return True
-        for i in range(N):
-            if g[N - 1][i] == 0:
-                return True
         return False
 
 def callback(event):
+    global num_cnt
     keys = ['w', 'a', 's', 'd', 'q']
     global game_over
     key = event.name
@@ -121,11 +121,12 @@ def callback(event):
         moved = move(key)
         if moved:
             ran_num()
+            num_cnt += 1
             printg()
-        if not check():
-            print("Game Over!")
-            game_over = True
-            keyboard.unhook_all()
+            if num_cnt >= N * N and not check():
+                print("Game Over!")
+                game_over = True
+                keyboard.unhook_all()
 
 def printg_periodically():
     global game_over
@@ -135,6 +136,7 @@ def printg_periodically():
 
 ran_num()
 ran_num()
+num_cnt += 2
 printg()
 keyboard.on_press(callback)
 
