@@ -13,7 +13,9 @@ class Game2048:
         self.game_over = False
         self.lock = Lock()
         self.grid = np.zeros((size, size), dtype=int)
-        self.cooldown = False 
+        self.cooldown = False
+        self.key_of_press = set()
+        self.keys = ['w', 'a', 's', 'd']
 
         self.root.title("2048 Game")
         
@@ -39,6 +41,7 @@ class Game2048:
         self.credit_label2.grid(row=3, column=1, padx=10, sticky=tk.W)
 
         self.root.bind("<KeyPress>", self.key_press)
+        self.root.bind("<KeyRelease>", self.key_release)
         
         self.ran_num()
         self.ran_num()
@@ -88,18 +91,32 @@ class Game2048:
 
     def move(self, key):
         with self.lock:
+            moved = False
             if key == 'w':
                 for i in range(self.size):
-                    self.grid[:, i] = self.merge(self.grid[:, i], 0)
+                    new_col = self.merge(self.grid[:, i], 0)
+                    if not np.array_equal(self.grid[:, i], new_col):
+                        moved = True
+                    self.grid[:, i] = new_col
             elif key == 's':
                 for i in range(self.size):
-                    self.grid[:, i] = self.merge(self.grid[:, i], 1)
+                    new_col = self.merge(self.grid[:, i], 1)
+                    if not np.array_equal(self.grid[:, i], new_col):
+                        moved = True
+                    self.grid[:, i] = new_col
             elif key == 'a':
                 for i in range(self.size):
-                    self.grid[i, :] = self.merge(self.grid[i, :], 0)
+                    new_row = self.merge(self.grid[i, :], 0)
+                    if not np.array_equal(self.grid[i, :], new_row):
+                        moved = True
+                    self.grid[i, :] = new_row
             elif key == 'd':
                 for i in range(self.size):
-                    self.grid[i, :] = self.merge(self.grid[i, :], 1)
+                    new_row = self.merge(self.grid[i, :], 1)
+                    if not np.array_equal(self.grid[i, :], new_row):
+                        moved = True
+                    self.grid[i, :] = new_row
+            return moved
 
     def check(self):
         for i in range(self.size):
@@ -112,18 +129,27 @@ class Game2048:
         if self.cooldown:
             return
 
-        keys = ['w', 'a', 's', 'd', 'q']
-        if event.char in keys:
+        if event.char in self.keys:
+            self.key_of_press.add(event.char)
+
+    def key_release(self, event):
+        if self.cooldown:
+            return
+
+        if event.char in self.keys and event.char in self.key_of_press:    
             self.cooldown = True 
-            self.move(event.char)
-            if self.check():
-                self.ran_num()
-                self.printg()
-            else:
-                self.game_over = True
-                self.root.unbind("<KeyPress>")
-                self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
-            self.root.after(200, self.reset_cooldown) 
+            moved = self.move(event.char)
+            flag = self.check()
+            if moved:
+                if flag:
+                    self.ran_num()
+                    self.printg()
+                else:
+                    self.game_over = True
+                    self.root.unbind("<KeyPress>")
+                    self.root.unbind("<KeyRelease>")
+                    self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
+            self.root.after(200, self.reset_cooldown)
 
     def reset_cooldown(self):
         self.cooldown = False
@@ -139,19 +165,19 @@ class SizeSelector:
         self.root.title("2048")
 
         self.label_2048 = tk.Label(self.root, text="2048", font=("Helvetica Neue", 32))
-        self.label_2048.grid(row=0, column=0, columnspan=2, pady=20)  
+        self.label_2048.grid(row=0, column=0, columnspan=2, pady=20)
 
         self.label_1 = tk.Label(self.root, text="Enter grid size (3 <= size <= 20):", font=("Helvetica Neue", 16))
-        self.label_1.grid(row=1, column=0, pady=20)  
+        self.label_1.grid(row=1, column=0, pady=20)
 
         self.entry = tk.Entry(self.root, font=("Helvetica Neue", 16))
-        self.entry.grid(row=1, column=1, pady=20) 
+        self.entry.grid(row=1, column=1, pady=20)
 
         self.label_2 = tk.Label(self.root, text="Use w,a,s,d to control!", font=("Helvetica Neue", 16))
-        self.label_2.grid(row=2, column=0, columnspan=2, pady=20)  
+        self.label_2.grid(row=2, column=0, columnspan=2, pady=20)
 
         self.button = tk.Button(self.root, text="Start Game", font=("Helvetica Neue", 16), command=self.start_game)
-        self.button.grid(row=3, column=0, columnspan=2, pady=20)  
+        self.button.grid(row=3, column=0, columnspan=2, pady=20)
 
     def start_game(self):
         try:
