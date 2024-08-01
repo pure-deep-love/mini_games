@@ -6,45 +6,46 @@ from threading import Thread, Lock
 
 class Game2048:
     def __init__(self, root, size):
-            self.root = root
-            self.size = size
-            self.score = 0
-            self.start_time = time.time()
-            self.game_over = False
-            self.lock = Lock()
-            self.grid = np.zeros((size, size), dtype=int)
+        self.root = root
+        self.size = size
+        self.score = 0
+        self.start_time = time.time()
+        self.game_over = False
+        self.lock = Lock()
+        self.grid = np.zeros((size, size), dtype=int)
+        self.cooldown = False 
 
-            self.root.title("2048 Game")
-            
-            self.top_frame = tk.Frame(self.root)
-            self.top_frame.grid(row=0, column=0, columnspan=2, pady=10)
+        self.root.title("2048 Game")
+        
+        self.top_frame = tk.Frame(self.root)
+        self.top_frame.grid(row=0, column=0, columnspan=2, pady=10)
 
-            self.score_label = tk.Label(self.top_frame, text=f"YOUR SCORE: {self.score}", font=("Helvetica Neue", 20))
-            self.score_label.grid(row=0, column=0, padx=20, sticky=tk.W)
+        self.score_label = tk.Label(self.top_frame, text=f"YOUR SCORE: {self.score}", font=("Helvetica Neue", 20))
+        self.score_label.grid(row=0, column=0, padx=20, sticky=tk.W)
 
-            self.time_label = tk.Label(self.top_frame, text=f"TIME: {int(time.time() - self.start_time)}", font=("Helvetica Neue", 20))
-            self.time_label.grid(row=0, column=1, padx=20, sticky=tk.W)
+        self.time_label = tk.Label(self.top_frame, text=f"TIME: {int(time.time() - self.start_time)}", font=("Helvetica Neue", 20))
+        self.time_label.grid(row=0, column=1, padx=20, sticky=tk.W)
 
-            self.canvas = tk.Canvas(self.root, width=606, height=606)
-            self.canvas.grid(row=1, column=0, columnspan=2)
+        self.canvas = tk.Canvas(self.root, width=606, height=606)
+        self.canvas.grid(row=1, column=0, columnspan=2)
 
-            self.bottom_frame = tk.Frame(self.root)
-            self.bottom_frame.grid(row=2, column=0, columnspan=2, pady=10)
+        self.bottom_frame = tk.Frame(self.root)
+        self.bottom_frame.grid(row=2, column=0, columnspan=2, pady=10)
 
-            self.credit_label1 = tk.Label(self.bottom_frame, text="POWERED by JUICE", font=("Helvetica Neue", 12))
-            self.credit_label1.grid(row=3, column=0, padx=10, sticky=tk.W)
+        self.credit_label1 = tk.Label(self.bottom_frame, text="POWERED by JUICE", font=("Helvetica Neue", 12))
+        self.credit_label1.grid(row=3, column=0, padx=10, sticky=tk.W)
 
-            self.credit_label2 = tk.Label(self.bottom_frame, text="https://github.com/pure-deep-love/mini_games.git", font=("Helvetica Neue", 12))
-            self.credit_label2.grid(row=3, column=1, padx=10, sticky=tk.W)
+        self.credit_label2 = tk.Label(self.bottom_frame, text="https://github.com/pure-deep-love/mini_games.git", font=("Helvetica Neue", 12))
+        self.credit_label2.grid(row=3, column=1, padx=10, sticky=tk.W)
 
-            self.root.bind("<KeyPress>", self.key_press)
-            
-            self.ran_num()
-            self.ran_num()
-            self.printg()
+        self.root.bind("<KeyPress>", self.key_press)
+        
+        self.ran_num()
+        self.ran_num()
+        self.printg()
 
-            self.print_thread = Thread(target=self.printg_periodically)
-            self.print_thread.start()
+        self.print_thread = Thread(target=self.printg_periodically)
+        self.print_thread.start()
 
     def printg(self):
         with self.lock:
@@ -108,8 +109,12 @@ class Game2048:
         return False
 
     def key_press(self, event):
+        if self.cooldown:
+            return
+
         keys = ['w', 'a', 's', 'd', 'q']
         if event.char in keys:
+            self.cooldown = True 
             self.move(event.char)
             if self.check():
                 self.ran_num()
@@ -118,6 +123,10 @@ class Game2048:
                 self.game_over = True
                 self.root.unbind("<KeyPress>")
                 self.canvas.create_text(300, 350, text="Game Over!", font=("Helvetica Neue", 40), fill="red")
+            self.root.after(200, self.reset_cooldown) 
+
+    def reset_cooldown(self):
+        self.cooldown = False
 
     def printg_periodically(self):
         while not self.game_over:
