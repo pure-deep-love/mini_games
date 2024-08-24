@@ -40,7 +40,7 @@ class Game2048(QMainWindow):
 
         cell_size = 606 // self.size
         window_width = cell_size * self.size + 20
-        window_height = cell_size * self.size + 150  # Increase height for Game Over message
+        window_height = cell_size * self.size + 120  # Increase height for Game Over message
 
         self.setGeometry(300, 300, window_width, window_height)
         self.setFixedSize(window_width, window_height)
@@ -61,6 +61,8 @@ class Game2048(QMainWindow):
         self.game_over_label.setStyleSheet("font-size: 30px; color: red;")
         self.game_over_label.setAlignment(Qt.AlignCenter)
         self.game_over_label.setText("")  # Initially empty
+        self.game_over_label.setGeometry(0, 0, window_width, window_height)
+        self.game_over_label.setVisible(False)
 
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(0)
@@ -89,6 +91,7 @@ class Game2048(QMainWindow):
             self.time_label.setText(f"TIME: {int(time.time() - self.start_time)}")
             if self.game_over:
                 self.game_over_label.setText("Game Over!")  # Update Game Over label
+                self.game_over_label.setVisible(True)  # Ensure Game Over label is visible
 
     def printg(self):
         cell_size = 606 // self.size
@@ -118,6 +121,14 @@ class Game2048(QMainWindow):
                 else:
                     frame.setStyleSheet("background-color: #d9d9d9;")
                     self.grid_layout.addWidget(frame, i, j)
+
+        if self.game_over:
+            self.game_over_label.setGeometry(
+                0, 0, self.width(), self.height() - 120
+            )
+            self.game_over_label.setVisible(True)
+        else:
+            self.game_over_label.setVisible(False)
 
     def ran_num(self):
         a, b = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
@@ -203,7 +214,7 @@ class Game2048(QMainWindow):
                 if not self.check():
                     self.game_over = True
                     self.printg_above()
-                    self.game_over_label.setText("Game Over!")  # Show Game Over message
+                    self.timer.stop()  # Stop the timer
             QTimer.singleShot(120, self.reset_cooldown)
 
     def reset_cooldown(self):
