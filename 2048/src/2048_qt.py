@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import random
 import time
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QLineEdit, QVBoxLayout, QGridLayout, QWidget, QHBoxLayout, QFrame
+from PyQt5.QtWidgets import QApplication, QMainWindow, QInputDialog,QLabel, QPushButton, QLineEdit, QVBoxLayout, QGridLayout, QWidget, QHBoxLayout, QFrame
 from PyQt5.QtCore import Qt, QTimer, QMutex, QMutexLocker, pyqtSignal
 from PyQt5.QtGui import QIcon
 
@@ -40,7 +40,7 @@ class Game2048(QMainWindow):
 
         cell_size = 606 // self.size
         window_width = cell_size * self.size + 20
-        window_height = cell_size * self.size + 120  # Increase height for Game Over message
+        window_height = cell_size * self.size + 150  # Increase height for Game Over message and New Game button
 
         self.setGeometry(300, 300, window_width, window_height)
         self.setFixedSize(window_width, window_height)
@@ -61,8 +61,12 @@ class Game2048(QMainWindow):
         self.game_over_label.setStyleSheet("font-size: 30px; color: red;")
         self.game_over_label.setAlignment(Qt.AlignCenter)
         self.game_over_label.setText("")  # Initially empty
-        self.game_over_label.setGeometry(0, 0, window_width, window_height)
         self.game_over_label.setVisible(False)
+
+        self.new_game_button = QPushButton("New Game")  # New button for starting a new game
+        self.new_game_button.setStyleSheet("font-size: 20px;")
+        self.new_game_button.clicked.connect(self.start_new_game)
+        self.new_game_button.setVisible(False)
 
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(0)
@@ -79,6 +83,7 @@ class Game2048(QMainWindow):
         main_layout.addLayout(top_layout)
         main_layout.addLayout(self.grid_layout)
         main_layout.addWidget(self.game_over_label)  # Add Game Over label
+        main_layout.addWidget(self.new_game_button)  # Add New Game button
         main_layout.addLayout(bottom_layout)
 
         container = QWidget()
@@ -92,6 +97,7 @@ class Game2048(QMainWindow):
             if self.game_over:
                 self.game_over_label.setText("Game Over!")  # Update Game Over label
                 self.game_over_label.setVisible(True)  # Ensure Game Over label is visible
+                self.new_game_button.setVisible(True)  # Show New Game button
 
     def printg(self):
         cell_size = 606 // self.size
@@ -124,11 +130,19 @@ class Game2048(QMainWindow):
 
         if self.game_over:
             self.game_over_label.setGeometry(
-                0, 0, self.width(), self.height() - 120
+                0, 0, self.width(), self.height() - 150
             )
             self.game_over_label.setVisible(True)
+            self.new_game_button.setGeometry(
+                (self.width() - self.new_game_button.width()) // 2,
+                self.height() - self.new_game_button.height() - 20,
+                self.new_game_button.width(),
+                self.new_game_button.height()
+            )
+            self.new_game_button.setVisible(True)
         else:
             self.game_over_label.setVisible(False)
+            self.new_game_button.setVisible(False)
 
     def ran_num(self):
         a, b = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
@@ -213,8 +227,8 @@ class Game2048(QMainWindow):
                 self.printg()
                 if not self.check():
                     self.game_over = True
+                    self.timer.stop()  # Stop the timer when the game is over
                     self.printg_above()
-                    self.timer.stop()  # Stop the timer
             QTimer.singleShot(120, self.reset_cooldown)
 
     def reset_cooldown(self):
@@ -222,6 +236,21 @@ class Game2048(QMainWindow):
 
     def update_timer(self):
         self.update_signal.emit()
+
+    def start_new_game(self):
+        size, ok = QInputDialog.getInt(self, "Enter Grid Size", "Grid size (3-20):", self.size, 3, 20)
+        if ok:
+            self.size = size
+            self.score = 0
+            self.start_time = time.time()
+            self.game_over = False
+            self.grid = np.zeros((size, size), dtype=int)
+            self.ran_num()
+            self.ran_num()
+            self.num_cnt = 2
+            self.printg()
+            self.printg_above()
+            self.timer.start(1000)
 
 class SizeSelector(QMainWindow):
     def __init__(self):
